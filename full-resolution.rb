@@ -1,7 +1,11 @@
 @magic_counter = 0
+@max = 25
+@max_depth = 0
 def magic (remaining, haystack)
   @magic_counter += 1
-
+  @max_depth = [@max - remaining.length, @max_depth].max
+  puts @max_depth
+  puts @magic_counter
   if(remaining.length == 0)
     return true
   end
@@ -15,32 +19,25 @@ def magic (remaining, haystack)
 
   result = false
   matches.each do |match|
-    inner_remaining = Array.new(remaining)
-    inner_remaining = inner_remaining.drop(1)
 
-    begin
-      inner_haystack = haystack
-      inner_haystack[match.offset(0)[0]..match.offset(0)[1]-1] = '.'
-      result = result || magic(inner_remaining, inner_haystack)
-    rescue
-      puts inner_haystack
-      puts inner_remaining.length
-      exit
-    end
+  inner_remaining = Array.new(remaining)
+  inner_remaining = inner_remaining.drop(1)
+  inner_haystack = String.new(haystack)
+  inner_haystack[match.offset(0)[0]..match.offset(0)[1]-1] = '.'
+  result = result || magic(inner_remaining, inner_haystack)
+
   end
   result
 end
 
 def attempt
-  max = 250
-
   # setup string from 1 to n with a random number missing
-  numbers = [*1..max].shuffle
+  numbers = [*1..@max].shuffle
   numbers.pop
   numbers = numbers.join
 
   # count all the digits
-  expected = [*1..max].join
+  expected = [*1..@max].join
   expected_digits = [0,0,0,0,0,0,0,0,0,0]
   digits = [0,0,0,0,0,0,0,0,0,0]
 
@@ -75,7 +72,7 @@ def attempt
   missing_no_2 = []
   permutations.each do |n|
     num = n.join.to_i
-    if (num <= max && !numbers.include?(n.join))
+    if (num <= @max && !numbers.include?(n.join))
       missing_no_2.push(num)
     end
   end
@@ -85,7 +82,7 @@ def attempt
   end
 
   permutations.each do |permutation|
-    remaining = [*1..max]
+    remaining = [*1..@max]
     remaining -= [permutation.join.to_i]
 
     if (magic(remaining, numbers))
@@ -95,7 +92,7 @@ def attempt
   []
 end
 
-max_attempts = 1
+max_attempts = 5
 result = 0
 for i in 1..max_attempts
   data = attempt

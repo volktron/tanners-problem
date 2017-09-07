@@ -5,4 +5,8 @@
 * Find the missing number
 
 # results
-partial-resolution.rb solves the problem ~49% of the time.
+## Partial
+* `partial-resolution.rb` solves the problem ~49% of the time.
+## Full
+* `full-resolution.rb` solves the problem 100% of the time, but potentially uses *a lot* of memory.
+* Runtime is less than O(n!), but at least O(n log n)

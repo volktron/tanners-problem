@@ -1,13 +1,24 @@
 @magic_counter = 0
-@max = 25
+@max = 250
 @max_depth = 0
+@haystack_cache = {}
+
 def magic (remaining, haystack)
   @magic_counter += 1
-  @max_depth = [@max - remaining.length, @max_depth].max
-  puts @max_depth
-  puts @magic_counter
+  depth = @max - remaining.length
+  if (
+    #@max_depth < depth ||
+    @magic_counter.modulo(100000) == 0)
+    puts "Depth:#{depth}/#{@max_depth} : Count:#{@magic_counter} : Cache:#{@haystack_cache.length} : Haystack:#{haystack.length}"
+  end
+  @max_depth = [depth, @max_depth].max
+
   if(remaining.length == 0)
     return true
+  end
+
+  if(!@haystack_cache[haystack.to_sym].nil?)
+    return false
   end
 
   needle = remaining[0]
@@ -17,6 +28,8 @@ def magic (remaining, haystack)
     return false
   end
 
+  @haystack_cache[haystack.to_sym] = true
+
   result = false
   matches.each do |match|
 
@@ -24,6 +37,7 @@ def magic (remaining, haystack)
   inner_remaining = inner_remaining.drop(1)
   inner_haystack = String.new(haystack)
   inner_haystack[match.offset(0)[0]..match.offset(0)[1]-1] = '.'
+  inner_haystack = inner_haystack.squeeze('.')
   result = result || magic(inner_remaining, inner_haystack)
 
   end
@@ -33,7 +47,7 @@ end
 def attempt
   # setup string from 1 to n with a random number missing
   numbers = [*1..@max].shuffle
-  numbers.pop
+  missing = numbers.pop
   numbers = numbers.join
 
   # count all the digits
@@ -66,6 +80,7 @@ def attempt
   end
 
   if (permutations.length === 1)
+    puts "Found it! #{missing} #{permutations[0].join}"
     return permutations
   end
 
@@ -78,25 +93,43 @@ def attempt
   end
 
   if (missing_no_2.length > 0)
+    puts "Found it! #{missing} #{missing_no_2[0]}"
     return missing_no_2
   end
 
+  tries = 0
   permutations.each do |permutation|
-    remaining = [*1..@max]
-    remaining -= [permutation.join.to_i]
-
-    if (magic(remaining, numbers))
+    n = permutation.join.to_i
+    if (tries == permutations.length - 1)
+      puts "Found it! #{missing} #{n}"
       return [permutation.join]
     end
+
+    @magic_counter = 0
+    @max_depth = 0
+    @haystack_cache = {}
+
+    remaining = [*1..@max]
+    remaining -= [n]
+    remaining = remaining.reverse
+
+    result = magic(remaining, numbers)
+    if (result)
+      puts "Found it! #{missing} #{n}"
+      return [permutation.join]
+    end
+
+    tries += 1
   end
   []
 end
 
-max_attempts = 5
+max_attempts = 10
 result = 0
 for i in 1..max_attempts
+  puts "Attempt #{i}"
   data = attempt
-  result = data.length == 1 ? result + 1 : result
+  result = data.length > 0 ? result + 1 : result
 end
 
 percent = 100 * result / max_attempts

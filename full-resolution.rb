@@ -8,7 +8,7 @@ def magic (remaining, haystack)
   depth = @max - remaining.length
   if (
     #@max_depth < depth ||
-    @magic_counter.modulo(100000) == 0)
+    @magic_counter.modulo(1000) == 0)
     puts "Depth:#{depth}/#{@max_depth} : Count:#{@magic_counter} : Cache:#{@haystack_cache.length} : Haystack:#{haystack.length}"
   end
   @max_depth = [depth, @max_depth].max
@@ -21,20 +21,26 @@ def magic (remaining, haystack)
     return false
   end
 
-  needle = remaining[0]
-  matches = haystack.to_enum(:scan, /#{needle}/).map { Regexp.last_match }
-
-  if(matches.length == 0)
-    return false
-  end
-
   @haystack_cache[haystack.to_sym] = true
+
+  needle = 0
+  matches = []
+  remaining.each do |n|
+    matches = haystack.to_enum(:scan, /#{n}/).map { Regexp.last_match }
+    if (matches.length === 0)
+      return false
+    elsif (matches.length === 1)
+      needle = n
+      break
+    end
+
+  end
 
   result = false
   matches.each do |match|
 
   inner_remaining = Array.new(remaining)
-  inner_remaining = inner_remaining.drop(1)
+  inner_remaining.delete(needle)
   inner_haystack = String.new(haystack)
   inner_haystack[match.offset(0)[0]..match.offset(0)[1]-1] = '.'
   inner_haystack = inner_haystack.squeeze('.')
@@ -124,7 +130,7 @@ def attempt
   []
 end
 
-max_attempts = 10
+max_attempts = 100
 result = 0
 for i in 1..max_attempts
   puts "Attempt #{i}"

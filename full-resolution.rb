@@ -2,7 +2,7 @@
 @max = 250
 @max_depth = 0
 @haystack_cache = {}
-max_attempts = 100
+@max_attempts = 100
 
 def magic (remaining, haystack)
   @magic_counter += 1
@@ -44,7 +44,6 @@ def magic (remaining, haystack)
   matches = haystack.to_enum(:scan, /(?=(#{n}))/).map { Regexp.last_match }
 
   matches.each do |match|
-
     inner_remaining = Array.new(remaining)
     inner_remaining = inner_remaining.drop(1)
     inner_haystack = String.new(haystack)
@@ -52,6 +51,7 @@ def magic (remaining, haystack)
     inner_haystack = inner_haystack.squeeze('.')
     result = result || magic(inner_remaining, inner_haystack)
   end
+
   result
 end
 
@@ -136,7 +136,7 @@ end
 
 result = 0
 multiple = 0
-for i in 1..max_attempts
+for i in 1..@max_attempts
   puts "Attempt #{i}"
   data = attempt
   if (data.length == 1)
@@ -146,22 +146,7 @@ for i in 1..max_attempts
   end
 end
 
-percent = 100 * result / max_attempts
-puts "Result: #{result}/#{max_attempts} (#{percent}%) found original missing number"
-percent = 100 * multiple / max_attempts
-puts "Result: #{multiple}/#{max_attempts} (#{percent}%) found multiple valid permutations"
-
-#puts magic([1,2,3],"212133")
-
-#attempt
-
-=begin
-n = 777
-haystack = "12777777734"
-matches = haystack.to_enum(:scan, /(?=(#{n}))/).map { Regexp.last_match }
-matches.each do |m|
-  puts "#{m.offset(1)[0]} #{m.offset(1)[1]}"
-end
-
-puts "#{matches}"
-=end
+percent = 100 * result / @max_attempts
+puts "Result: #{result}/#{@max_attempts} (#{percent}%) found original missing number"
+percent = 100 * multiple / @max_attempts
+puts "Result: #{multiple}/#{@max_attempts} (#{percent}%) found multiple valid permutations"

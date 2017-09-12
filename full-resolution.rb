@@ -2,6 +2,7 @@
 @max = 250
 @max_depth = 0
 @haystack_cache = {}
+max_attempts = 100
 
 def magic (remaining, haystack)
   @magic_counter += 1
@@ -18,34 +19,38 @@ def magic (remaining, haystack)
   end
 
   if(!@haystack_cache[haystack.to_sym].nil?)
+    #puts "We've been here before, #{remaining[0]}"
     return false
   end
 
   @haystack_cache[haystack.to_sym] = true
 
-  needle = 0
-  matches = []
   remaining.each do |n|
-    matches = haystack.to_enum(:scan, /#{n}/).map { Regexp.last_match }
+    matches = haystack.to_enum(:scan, /(?=(#{n}))/).map { Regexp.last_match }
     if (matches.length === 0)
       return false
     elsif (matches.length === 1)
-      needle = n
-      break
+      inner_remaining = Array.new(remaining)
+      inner_remaining.delete(n)
+      inner_haystack = String.new(haystack)
+      inner_haystack[matches[0].offset(1)[0]..matches[0].offset(1)[1]-1] = '.'
+      inner_haystack = inner_haystack.squeeze('.')
+      return magic(inner_remaining, inner_haystack)
     end
-
   end
 
   result = false
+  n = remaining[0]
+  matches = haystack.to_enum(:scan, /(?=(#{n}))/).map { Regexp.last_match }
+
   matches.each do |match|
 
-  inner_remaining = Array.new(remaining)
-  inner_remaining.delete(needle)
-  inner_haystack = String.new(haystack)
-  inner_haystack[match.offset(0)[0]..match.offset(0)[1]-1] = '.'
-  inner_haystack = inner_haystack.squeeze('.')
-  result = result || magic(inner_remaining, inner_haystack)
-
+    inner_remaining = Array.new(remaining)
+    inner_remaining = inner_remaining.drop(1)
+    inner_haystack = String.new(haystack)
+    inner_haystack[match.offset(1)[0]..match.offset(1)[1]-1] = "."
+    inner_haystack = inner_haystack.squeeze('.')
+    result = result || magic(inner_remaining, inner_haystack)
   end
   result
 end
@@ -86,7 +91,7 @@ def attempt
   end
 
   if (permutations.length === 1)
-    puts "Found it! #{missing} #{permutations[0].join}"
+    #puts "Found it! #{missing} #{permutations[0].join}"
     return permutations
   end
 
@@ -99,17 +104,13 @@ def attempt
   end
 
   if (missing_no_2.length > 0)
-    puts "Found it! #{missing} #{missing_no_2[0]}"
+    #puts "Found it! #{missing} #{missing_no_2[0]}"
     return missing_no_2
   end
 
-  tries = 0
+  answers = []
   permutations.each do |permutation|
     n = permutation.join.to_i
-    if (tries == permutations.length - 1)
-      puts "Found it! #{missing} #{n}"
-      return [permutation.join]
-    end
 
     @magic_counter = 0
     @max_depth = 0
@@ -121,24 +122,46 @@ def attempt
 
     result = magic(remaining, numbers)
     if (result)
-      puts "Found it! #{missing} #{n}"
-      return [permutation.join]
+      #puts "Found it! #{missing} #{n}"
+      answers.push(permutation.join)
     end
-
-    tries += 1
   end
-  []
+  #if (answers.length === 0)
+  #  puts numbers
+  #  puts "#{permutations}"
+  #end
+
+  answers
 end
 
-max_attempts = 100
 result = 0
+multiple = 0
 for i in 1..max_attempts
   puts "Attempt #{i}"
   data = attempt
-  result = data.length > 0 ? result + 1 : result
+  if (data.length == 1)
+    result += 1
+  elsif data.length > 1
+    multiple +=1
+  end
 end
 
 percent = 100 * result / max_attempts
-puts "Result: #{percent}% success"
+puts "Result: #{result}/#{max_attempts} (#{percent}%) found original missing number"
+percent = 100 * multiple / max_attempts
+puts "Result: #{multiple}/#{max_attempts} (#{percent}%) found multiple valid permutations"
 
 #puts magic([1,2,3],"212133")
+
+#attempt
+
+=begin
+n = 777
+haystack = "12777777734"
+matches = haystack.to_enum(:scan, /(?=(#{n}))/).map { Regexp.last_match }
+matches.each do |m|
+  puts "#{m.offset(1)[0]} #{m.offset(1)[1]}"
+end
+
+puts "#{matches}"
+=end
